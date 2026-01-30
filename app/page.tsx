@@ -48,6 +48,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const handleVerify = async () => {
+    console.log('Verify button clicked');
+
     if (!imageDataUrl) {
       setError('Please upload a label image');
       return;
@@ -70,6 +72,7 @@ export default function Home() {
     setVerificationResults(null);
 
     try {
+      console.log('Sending verification request...');
       const response = await fetch('/api/verify', {
         method: 'POST',
         headers: {
@@ -81,7 +84,9 @@ export default function Home() {
         }),
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data received');
 
       if (!response.ok) {
         throw new Error(data.error || 'Verification failed');
@@ -89,6 +94,7 @@ export default function Home() {
 
       setVerificationResults(data);
     } catch (err) {
+      console.error('Verification error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during verification');
     } finally {
       setIsVerifying(false);

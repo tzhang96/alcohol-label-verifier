@@ -1,8 +1,9 @@
 // Government warning text as required by 27 CFR Part 16
 export const GOVERNMENT_WARNING_TEXT = `GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.`;
 
-// Maximum file size in bytes (10MB)
-export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+// Maximum original file size in bytes before resizing (20MB)
+// Images are automatically resized to stay under Vercel's 4.5MB payload limit
+export const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
 // API timeout in milliseconds
 export const API_TIMEOUT_MS = 8000;

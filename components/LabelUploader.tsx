@@ -20,7 +20,7 @@ export default function LabelUploader({ onImageSelect, disabled = false }: Label
       return 'Please upload a JPG, PNG, or WEBP image';
     }
 
-    // Check file size
+    // Check file size (sanity check before processing)
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return `File size must be less than ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB`;
     }
@@ -28,7 +28,52 @@ export default function LabelUploader({ onImageSelect, disabled = false }: Label
     return null;
   };
 
-  const processFile = (file: File) => {
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Maximum dimensions to keep payload under Vercel limit
+          const MAX_WIDTH = 1920;
+          const MAX_HEIGHT = 1920;
+
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+
+          // Create canvas and resize
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with compression (0.85 quality for JPEG)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const processFile = async (file: File) => {
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
@@ -37,13 +82,14 @@ export default function LabelUploader({ onImageSelect, disabled = false }: Label
 
     setError(null);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
+    try {
+      const dataUrl = await resizeImage(file);
       setPreview(dataUrl);
       onImageSelect(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setError('Failed to process image. Please try another file.');
+      console.error('Image processing error:', err);
+    }
   };
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +188,7 @@ export default function LabelUploader({ onImageSelect, disabled = false }: Label
               </button>
             </div>
             <p className="text-sm text-gray-500">
-              Supported formats: JPG, PNG, WEBP (Max 10MB)
+              Supported formats: JPG, PNG, WEBP (Max 20MB, auto-resized for optimal processing)
             </p>
           </div>
 

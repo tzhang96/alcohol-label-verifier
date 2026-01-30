@@ -34,6 +34,51 @@ export default function BatchUploader({ onBatchReady, disabled = false }: BatchU
   const imageInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Maximum dimensions to keep payload under Vercel limit
+          const MAX_WIDTH = 1920;
+          const MAX_HEIGHT = 1920;
+
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+            const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+
+          // Create canvas and resize
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with compression (0.85 quality for JPEG)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImagesSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
@@ -50,23 +95,23 @@ export default function BatchUploader({ onBatchReady, disabled = false }: BatchU
       }
 
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        setError(`File ${file.name} exceeds 10MB size limit`);
+        setError(`File ${file.name} exceeds ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB size limit`);
         continue;
       }
 
-      // Read file as data URL
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      try {
+        // Resize image to keep payload small
+        const dataUrl = await resizeImage(file);
 
-      newImages.push({
-        id: `${Date.now()}-${i}`,
-        file,
-        dataUrl,
-      });
+        newImages.push({
+          id: `${Date.now()}-${i}`,
+          file,
+          dataUrl,
+        });
+      } catch (err) {
+        setError(`Failed to process ${file.name}`);
+        console.error('Image processing error:', err);
+      }
     }
 
     setImages((prev) => [...prev, ...newImages]);
