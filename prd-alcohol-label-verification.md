@@ -14,7 +14,7 @@ Build a web application that uses AI vision capabilities to verify alcohol bever
 
 - **Framework:** Next.js 14+ (App Router)
 - **Deployment:** Vercel
-- **AI Model:** Google Gemini 3 Flash (`gemini-3-flash-preview`)
+- **AI Model:** Google Gemini Flash Lite (`gemini-flash-lite-latest`)
 - **Styling:** Tailwind CSS
 - **Language:** TypeScript
 
@@ -64,7 +64,7 @@ The user enters the expected values from the COLA (Certificate of Label Approval
 
 When user clicks "Verify Label":
 
-1. Send image to Gemini 3 Flash API with structured extraction prompt
+1. Send image to Gemini Flash Lite API with structured extraction prompt
 2. Parse extracted fields from response
 3. Compare each extracted field against user-provided expected values
 4. Return field-by-field verification results
@@ -85,7 +85,7 @@ For each field, show:
 **Special handling for Government Warning:**
 - Must be exact match (word-for-word, punctuation)
 - "GOVERNMENT WARNING:" must be in all caps
-- "Surgeon General" must have correct capitalization
+- Accepts both standard capitalization ("Surgeon General") and all-caps version
 - Show specific failure reason if any requirement not met
 
 #### 1.5 Government Warning Reference
@@ -265,8 +265,8 @@ interface BatchVerifyResponse {
 
 ```typescript
 const modelConfig = {
-  model: 'gemini-3-flash-preview',
-  thinkingLevel: 'low', // Optimize for speed
+  model: 'gemini-flash-lite-latest',
+  // Optimized for fast, lightweight processing
   // Note: Don't need media_resolution param for standard label images
 };
 ```
@@ -352,22 +352,23 @@ function volumeMatch(expected: string, extracted: string): ComparisonResult {
 
 // Government Warning
 function warningMatch(expected: string, extracted: string): ComparisonResult {
-  // EXACT match required (word-for-word)
   // Check "GOVERNMENT WARNING:" is all caps
-  // Check "Surgeon General" capitalization
-  // Whitespace normalized (preserves punctuation and capitalization)
+  // Accept either standard capitalization OR all-caps version
+  // EXACT word-for-word match required (case-insensitive comparison)
+  // Whitespace normalized (preserves punctuation)
   // Return specific failure reason if any check fails
 }
 ```
 
 #### 6.2 Government Warning Validation Rules
 
-The warning must pass ALL of these checks:
+The warning must pass these checks:
 1. Contains exact required text (word-for-word)
 2. "GOVERNMENT WARNING:" is in ALL CAPS
-3. "Surgeon" has capital S
-4. "General" has capital G
-5. Punctuation matches (colons, periods, parentheses)
+3. Punctuation matches (colons, periods, parentheses)
+4. Text matches either:
+   - Standard capitalization: "Surgeon General" with capital S and G, OR
+   - All-caps version: entire warning in uppercase letters
 
 If any check fails, return `mismatch` with specific reason.
 
@@ -486,7 +487,7 @@ Include these explicitly:
 
 1. ✅ User can enter application data in form
 2. ✅ User can upload a label image
-3. ✅ System extracts text from label using Gemini 3 Flash
+3. ✅ System extracts text from label using Gemini Flash Lite
 4. ✅ System compares extracted vs expected values
 5. ✅ Results display clearly with pass/fail per field
 6. ✅ Government warning gets exact-match validation
@@ -528,9 +529,11 @@ GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink
 
 Requirements:
 - "GOVERNMENT WARNING:" must be in capital letters and bold type
-- "Surgeon" and "General" must be capitalized
+- Text may be in standard capitalization ("Surgeon General") or all-caps
 - Must appear as one contiguous statement
 - Must be separate and apart from other information
+
+**Note:** The verification tool accepts both capitalization formats (standard or all-caps) but cannot verify bold formatting or spatial separation from the image.
 
 ---
 
@@ -592,4 +595,5 @@ Requirements:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-01-25 | Initial PRD |
-| 1.1 | 2025-01-30 | Updated comparison logic to exact matching for TTB compliance. Removed fuzzy matching with 80% similarity threshold. Removed ±0.5% alcohol content tolerance. All fields now require exact match with minimal normalization (case, whitespace, punctuation). |
+| 1.1 | 2025-01-30 | Updated comparison logic to exact matching for TTB compliance. Removed fuzzy matching with 80% similarity threshold. Removed ±0.5% alcohol content tolerance. All fields now require exact match with minimal normalization (case, whitespace, punctuation). Changed AI model from `gemini-3-flash-preview` to `gemini-flash-lite-latest` for faster, more cost-effective processing. |
+| 1.2 | 2025-01-30 | Updated government warning validation to accept both standard capitalization and all-caps version of the warning text. |

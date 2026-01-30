@@ -115,6 +115,7 @@ export function volumeMatch(expected: string, extracted: string | null): Compari
 
 /**
  * Government warning exact match - strict validation
+ * Accepts both standard capitalization and all-caps version
  */
 export function warningMatch(expected: string, extracted: string | null): ComparisonResult {
   if (!extracted || extracted.trim() === '') {
@@ -133,27 +134,23 @@ export function warningMatch(expected: string, extracted: string | null): Compar
     }
   }
 
-  // Check "Surgeon General" capitalization
-  if (!extracted.includes('Surgeon General')) {
-    if (extracted.toLowerCase().includes('surgeon general')) {
-      return {
-        status: 'mismatch',
-        details: '"Surgeon General" must have correct capitalization (capital S and G)',
-      };
-    }
-  }
-
-  // Normalize whitespace for comparison (preserves punctuation and capitalization)
+  // Normalize whitespace for comparison
   const normalizedExpected = expectedText.replace(/\s+/g, ' ').trim();
   const normalizedExtracted = extracted.replace(/\s+/g, ' ').trim();
 
+  // Accept exact match with standard capitalization
   if (normalizedExpected === normalizedExtracted) {
+    return { status: 'match' };
+  }
+
+  // Accept all-caps version
+  if (normalizedExpected.toUpperCase() === normalizedExtracted.toUpperCase()) {
     return { status: 'match' };
   }
 
   return {
     status: 'mismatch',
-    details: 'Government warning text does not match required format. Must match word-for-word including punctuation and capitalization.',
+    details: 'Government warning text does not match required format. Must match word-for-word including punctuation.',
   };
 }
 

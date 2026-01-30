@@ -6,10 +6,10 @@ An AI-powered web application that helps TTB (Alcohol and Tobacco Tax and Trade 
 
 - **Single Label Verification**: Upload a label image and compare against expected values from COLA applications
 - **Batch Upload Processing**: Verify multiple labels at once with CSV data or common values
-- **AI-Powered Extraction**: Uses Google Gemini 2.0 Flash for fast, accurate text extraction from label images
+- **AI-Powered Extraction**: Uses Google Gemini Flash Lite for fast, accurate text extraction from label images
 - **Field-by-Field Comparison**: Validates brand name, class/type, alcohol content, net contents, producer information, and government warning
-- **Smart Matching**: Handles variations in formatting, capitalization, and minor differences
-- **Government Warning Validation**: Strict validation for required health warning text
+- **Exact Matching**: Strict TTB-compliant validation with normalization for case, whitespace, and punctuation only
+- **Government Warning Validation**: Strict word-for-word validation for required health warning text
 - **CSV Export**: Export batch verification results to CSV for record-keeping
 - **Simple UI**: Designed for non-technical users with clear visual feedback
 - **Fast Processing**: <5 second response time for single label verification
@@ -19,7 +19,7 @@ An AI-powered web application that helps TTB (Alcohol and Tobacco Tax and Trade 
 - **Framework**: Next.js 14+ (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **AI Model**: Google Gemini 2.0 Flash
+- **AI Model**: Google Gemini Flash Lite
 - **Deployment**: Vercel (recommended)
 
 ## Prerequisites
@@ -278,20 +278,28 @@ This is a prototype tool with the following limitations:
 
 ### Field-Specific Matching
 
-- **Brand Name, Class/Type, Producer**: Fuzzy matching with 80% similarity threshold
-- **Alcohol Content**: Normalizes formats (ABV, Alc./Vol.) with ±0.5% tolerance
-- **Net Contents**: Normalizes units (mL, FL OZ) and formats
-- **Government Warning**: Exact match required with strict capitalization rules
+For TTB compliance, all comparisons use strict exact matching with minimal normalization:
+
+- **Brand Name, Class/Type, Producer, Country of Origin**: Exact match required after normalization
+  - Case-insensitive comparison
+  - Whitespace normalized
+  - Basic punctuation removed (periods, commas, hyphens)
+  - No typo tolerance
+- **Alcohol Content**: Exact percentage match required
+  - Normalizes formats (ABV, Alc./Vol.) but percentage must match exactly
+  - No tolerance for rounding differences
+- **Net Contents**: Exact value and unit match required
+  - Normalizes units (mL, FL OZ) and spacing
+- **Government Warning**: Exact match required
   - "GOVERNMENT WARNING:" must be all caps
-  - "Surgeon General" must have correct capitalization
+  - Accepts both standard capitalization and all-caps version
   - Word-for-word match including punctuation
 
 ### Status Types
 
-- ✅ **MATCH**: Values match exactly or within acceptable tolerance
+- ✅ **MATCH**: Values match exactly after normalization
 - ❌ **MISMATCH**: Values do not match
 - ⚠️ **NOT FOUND**: Field not visible or legible on label
-- ℹ️ **PARTIAL MATCH**: Values are similar but not exact (requires review)
 
 ## Troubleshooting
 

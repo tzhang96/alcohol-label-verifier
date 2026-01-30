@@ -7,7 +7,7 @@ const apiKey = process.env.GOOGLE_AI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 /**
- * Extracts label information from an image using Gemini 3 Flash
+ * Extracts label information from an image using Gemini Flash Lite
  * @param imageBase64 - Base64 encoded image string (without data:image prefix)
  * @param mimeType - MIME type of the image (e.g., 'image/jpeg')
  * @returns Extracted values from the label
@@ -21,9 +21,9 @@ export async function extractLabelData(
   }
 
   try {
-    // Initialize the model with low thinking level for speed
+    // Initialize the model for fast, lightweight processing
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-flash-lite-latest',
     });
 
     // Prepare the image data

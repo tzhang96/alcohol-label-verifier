@@ -22,29 +22,30 @@ export const FIELD_DISPLAY_NAMES: Record<string, string> = {
 };
 
 // Gemini extraction prompt
-export const EXTRACTION_PROMPT = `You are analyzing an alcohol beverage label image. Extract the following information exactly as it appears on the label.
+export const EXTRACTION_PROMPT = `Analyze this alcohol beverage label image and extract the following information exactly as it appears on the label.
+
+Extract these fields and return ONLY valid JSON (no markdown formatting, just the raw JSON object):
+
+1. brand_name - The product brand name (string or null)
+2. class_type - The class or type designation like "Kentucky Straight Bourbon Whiskey", "Red Wine", "Lager" (string or null)
+3. alcohol_content - The alcohol percentage statement like "45% Alc./Vol." or "12.5% ABV" (string or null)
+4. net_contents - The volume statement like "750 mL" or "12 FL OZ" (string or null)
+5. producer_name_address - The bottler/producer name and address including city and state (string or null)
+6. country_of_origin - Country of origin if shown (string or null)
+7. government_warning - The COMPLETE health warning statement including "GOVERNMENT WARNING:" prefix, exactly as printed (string or null)
 
 IMPORTANT:
 - Extract text EXACTLY as shown, preserving capitalization and punctuation
-- If a field is not visible or not legible, return null for that field
-- For the government warning, capture the COMPLETE text including "GOVERNMENT WARNING:" prefix
+- If a field is not visible or not legible, use null
+- For the government warning, capture the COMPLETE text
 
-Extract these fields:
-1. brand_name - The product brand name
-2. class_type - The class or type designation (e.g., "Kentucky Straight Bourbon Whiskey", "Red Wine", "Lager")
-3. alcohol_content - The alcohol percentage statement (e.g., "45% Alc./Vol.", "12.5% ABV")
-4. net_contents - The volume statement (e.g., "750 mL", "12 FL OZ")
-5. producer_name_address - The bottler/producer name and address (city and state)
-6. country_of_origin - Country of origin if shown (for imports)
-7. government_warning - The COMPLETE health warning statement, exactly as printed
-
-Respond with ONLY valid JSON in this exact format:
+Return only this JSON structure:
 {
   "brand_name": "...",
   "class_type": "...",
   "alcohol_content": "...",
   "net_contents": "...",
   "producer_name_address": "...",
-  "country_of_origin": "..." or null,
+  "country_of_origin": null,
   "government_warning": "..."
 }`;
