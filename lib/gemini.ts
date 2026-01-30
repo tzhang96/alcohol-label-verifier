@@ -41,9 +41,19 @@ export async function extractLabelData(
     const response = await result.response;
     const text = response.text();
 
+    // Log the raw response for debugging
+    console.log('Raw Gemini response:', text.substring(0, 200));
+
     // Parse the JSON response
     const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed: GeminiExtractionResponse = JSON.parse(cleanedText);
+
+    let parsed: GeminiExtractionResponse;
+    try {
+      parsed = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON. Cleaned text:', cleanedText.substring(0, 500));
+      throw new Error(`Invalid JSON response from Gemini: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
     // Map to ExtractedValues format
     const extractedValues: ExtractedValues = {
